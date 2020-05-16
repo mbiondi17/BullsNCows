@@ -1,0 +1,10 @@
+{
+	"files.exclude": {
+		"C:/Users/mbion/Desktop/Projects/UnrealProjects/BullsNCows/.git": true,
+		"C:/Users/mbion/Desktop/Projects/UnrealProjects/BullsNCows/.vs": true,
+		"C:/Users/mbion/Desktop/Projects/UnrealProjects/BullsNCows/.vscode": true,
+		"C:/Users/mbion/Desktop/Projects/UnrealProjects/BullsNCows/Content": true,
+		"C:/Users/mbion/Desktop/Projects/UnrealProjects/BullsNCows/Intermediate": true,
+		"C:/Users/mbion/Desktop/Projects/UnrealProjects/BullsNCows/Saved": true
+	}
+}
