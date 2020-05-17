@@ -1,8 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include "BullCowCartridge.h"
+#include "EasyHeterograms.h"
+#include "MediumHeterograms.h"
+#include "HardHeterograms.h"
+#include "RidiculousHeterograms.h"
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <locale>
 
 void UBullCowCartridge::BeginPlay() // When the game starts
 {
@@ -31,9 +36,10 @@ void UBullCowCartridge::OnInput(const FString& Input) // When the player hits en
     else {
         ProcessGuess(Input);
     }
-
-
 }
+
+
+#pragma region Helper Functions
 
 void UBullCowCartridge::SetupGame() {
     GuessesMade = 0;
@@ -41,21 +47,18 @@ void UBullCowCartridge::SetupGame() {
     //Stretch-TODO: Get difficulty from user input
     //Stretch-TODO: Set word from appropriate difficulty list.
     //TODO: Set this from list
-    HiddenWord = TEXT("Geisha");
+
+    int32 HiddenWordIndex = rand() % EasyHeterograms.Num(); 
+    HiddenWord = EasyHeterograms[HiddenWordIndex];
     HiddenWordLen = HiddenWord.Len();
     MaxGuesses = HiddenWordLen;
     PrintLine(TEXT("You have %i attempts."), MaxGuesses);
     PrintLine(TEXT("The Heterogram is %i letters"), HiddenWordLen);
     PrintLine(TEXT("Press enter to submit your guess.")); 
 
-
-    const TCHAR charArray[] = TEXT("plums");
-    PrintLine(TEXT("Char 1 of the hidden word is: %c"), HiddenWord[0]);
-    PrintLine(TEXT("Char 4 of the hidden word is: %c"), HiddenWord[3]);
-
 }
 
-void UBullCowCartridge::ShowInstructions() {
+void UBullCowCartridge::ShowInstructions() const {
     PrintLine(TEXT("Guess the Heterogram! Each guess will"));
     PrintLine(TEXT("reveal correct letters in the correct spot"));
     PrintLine(TEXT("('bulls') and correct letters in the wrong"));
@@ -86,12 +89,12 @@ void UBullCowCartridge::ProcessGuess(FString Guess) {
         }
         else {
             PrintLine(TEXT("Incorrect! You have %i guesses remaining."), MaxGuesses-GuessesMade);
-            //TODO: report bulls & cows.
+            ReportBullsAndCows(Guess);
         }
     }
 }
 
-bool UBullCowCartridge::IsHeterogram(const FString& guess) {
+bool UBullCowCartridge::IsHeterogram(const FString& guess) const {
     TMap<char, int32> LetterMap;
     for(int i = 0; i < guess.Len(); i++) {
         int32* charEntry = LetterMap.Find(guess[i]);
@@ -102,6 +105,34 @@ bool UBullCowCartridge::IsHeterogram(const FString& guess) {
     }
     return true;
     
+}
+
+void UBullCowCartridge::ReportBullsAndCows(const FString& guess) const {
+    int32 bulls = 0;
+    int32 cows = 0;
+    
+    TMap<char, int32> GuessMap;
+    for(int i = 0; i < guess.Len(); i++) {
+        char lowercase = std::tolower(guess[i], std::locale()); //need to ignore case in guess
+        int32* charEntry = GuessMap.Find(lowercase);
+        if(charEntry == nullptr) {
+            GuessMap.Add(lowercase, i);
+        }
+    }
+
+    for(int i = 0; i < HiddenWordLen; i++) { 
+        char lowercase = std::tolower(HiddenWord[i], std::locale());
+        if(GuessMap.Find(lowercase) != nullptr) {
+            if(*GuessMap.Find(lowercase) == i) {
+                bulls++;
+            }
+            else {
+                cows++;
+            }
+        }
+    }
+
+    PrintLine(TEXT("Your Guess contained %i bulls and %i cows"), bulls, cows);
 }
 
 void UBullCowCartridge::EndGame(bool Victory) {
@@ -117,3 +148,5 @@ void UBullCowCartridge::EndGame(bool Victory) {
     
     PrintLine(TEXT("Press Enter to play again."));
 }
+
+#pragma endregion

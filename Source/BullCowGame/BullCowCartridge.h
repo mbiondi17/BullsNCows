@@ -15,9 +15,10 @@ class BULLCOWGAME_API UBullCowCartridge : public UCartridge
 	virtual void BeginPlay() override;
 	virtual void OnInput(const FString& Input) override;
 	void ProcessGuess(FString Guess);
-	bool IsHeterogram(const FString& Guess);
+	bool IsHeterogram(const FString& Guess) const;
+	void ReportBullsAndCows(const FString& Guess) const;
 	void SetupGame();
-	void ShowInstructions();
+	void ShowInstructions() const;
 	void EndGame(bool Victory);
 
 	
