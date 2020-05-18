@@ -1,9 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include "BullCowCartridge.h"
-#include "EasyHeterograms.h"
-#include "MediumHeterograms.h"
-#include "HardHeterograms.h"
-#include "RidiculousHeterograms.h"
+#include "Heterograms.h"
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -42,14 +39,15 @@ void UBullCowCartridge::OnInput(const FString& Input) // When the player hits en
 #pragma region Helper Functions
 
 void UBullCowCartridge::SetupGame() {
+
     GuessesMade = 0;
     bGameFinished = false;
     //Stretch-TODO: Get difficulty from user input
     //Stretch-TODO: Set word from appropriate difficulty list.
-    //TODO: Set this from list
 
-    int32 HiddenWordIndex = rand() % EasyHeterograms.Num(); 
-    HiddenWord = EasyHeterograms[HiddenWordIndex];
+    const int minLength = 4;
+    const int maxLength = 8;
+    HiddenWord = GetHiddenWord(minLength, maxLength);
     HiddenWordLen = HiddenWord.Len();
     MaxGuesses = HiddenWordLen;
     PrintLine(TEXT("You have %i attempts."), MaxGuesses);
@@ -65,7 +63,7 @@ void UBullCowCartridge::ShowInstructions() const {
     PrintLine(TEXT("spot ('cows')."));
 }
 
-void UBullCowCartridge::ProcessGuess(FString Guess) {
+void UBullCowCartridge::ProcessGuess(const FString &Guess) {
     if(Guess.IsEmpty()) {
         PrintLine(TEXT("You didn't type a guess. Try again."));
         return;
@@ -89,7 +87,9 @@ void UBullCowCartridge::ProcessGuess(FString Guess) {
         }
         else {
             PrintLine(TEXT("Incorrect! You have %i guesses remaining."), MaxGuesses-GuessesMade);
-            ReportBullsAndCows(Guess);
+            PrintLine(TEXT("Remember, the Heterogram has %i letters."), HiddenWord.Len());
+            FBullCowCount BCCount = ReportBullsAndCows(Guess);
+            PrintLine(TEXT("Your Guess contained %i bulls and %i cows"), BCCount.Bulls, BCCount.Cows);
         }
     }
 }
@@ -107,10 +107,9 @@ bool UBullCowCartridge::IsHeterogram(const FString& guess) const {
     
 }
 
-void UBullCowCartridge::ReportBullsAndCows(const FString& guess) const {
-    int32 bulls = 0;
-    int32 cows = 0;
-    
+FBullCowCount UBullCowCartridge::ReportBullsAndCows(const FString& guess) const {
+    FBullCowCount countStruct;
+
     TMap<char, int32> GuessMap;
     for(int i = 0; i < guess.Len(); i++) {
         char lowercase = std::tolower(guess[i], std::locale()); //need to ignore case in guess
@@ -124,18 +123,34 @@ void UBullCowCartridge::ReportBullsAndCows(const FString& guess) const {
         char lowercase = std::tolower(HiddenWord[i], std::locale());
         if(GuessMap.Find(lowercase) != nullptr) {
             if(*GuessMap.Find(lowercase) == i) {
-                bulls++;
+                countStruct.Bulls++;
             }
             else {
-                cows++;
+                countStruct.Cows++;
             }
         }
     }
 
-    PrintLine(TEXT("Your Guess contained %i bulls and %i cows"), bulls, cows);
+    return countStruct;
 }
 
-void UBullCowCartridge::EndGame(bool Victory) {
+FString UBullCowCartridge::GetHiddenWord(const int32& minLength, const int32& maxLength) const{
+    
+    TArray<FString> ValidWords;
+
+    for(FString word : Heterograms) {
+        if(word.Len() >= minLength && word.Len() <= maxLength && IsHeterogram(word)) {
+            ValidWords.Emplace(word);
+        }            
+
+    }
+
+    int32 HiddenWordIndex = FMath::RandRange(0, ValidWords.Num() - 1); 
+    return ValidWords[HiddenWordIndex];
+       
+}
+
+void UBullCowCartridge::EndGame(const bool &Victory) {
     bGameFinished = true;
     if(Victory) {
         PrintLine(TEXT("Congratulations, You win!"));
